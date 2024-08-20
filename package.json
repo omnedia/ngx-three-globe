@@ -1,12 +1,15 @@
 {
   "name": "@omnedia/ngx-three-globe",
   "description": "A simple component library to create a container with an animated and interactive globe.",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "peerDependencies": {
     "@angular/common": "^18.2.0",
     "@angular/core": "^18.2.0",
     "three-globe": "^2.31.1",
     "three": "^0.167.1"
+  },
+  "devDependencies": {
+    "@types/three": "^0.167.1"
   },
   "dependencies": {
     "tslib": "^2.3.0"

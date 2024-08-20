@@ -1,22 +1,53 @@
-import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
-import ThreeGlobe from 'three-globe';
-import { ThreeGlobeConfig, ThreeGlobeData, ThreeGlobePosition } from './ngx-three-globe.types';
-import { AmbientLight, Color, DirectionalLight, Fog, PerspectiveCamera, PointLight, Scene, WebGLRenderer } from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { getData } from './globe-data';
+import { CommonModule } from "@angular/common";
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  Input,
+  OnDestroy,
+  ViewChild,
+} from "@angular/core";
+import {
+  AmbientLight,
+  Color,
+  DirectionalLight,
+  Fog,
+  MathUtils,
+  PerspectiveCamera,
+  PointLight,
+  Scene,
+  WebGLRenderer,
+} from "three";
+import ThreeGlobe from "three-globe";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { getData } from "./globe-data";
+import {
+  ThreeGlobeConfig,
+  ThreeGlobeData,
+  ThreeGlobePosition,
+} from "./ngx-three-globe.types";
 
 @Component({
-  selector: 'om-three-globe',
+  selector: "om-three-globe",
   standalone: true,
   imports: [CommonModule],
   templateUrl: "./ngx-three-globe.component.html",
   styleUrl: "./ngx-three-globe.component.scss",
 })
 export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
-  @ViewChild('GlobeCanvas') rendererContainer!: ElementRef;
+  @Input("styleClass")
+  styleClass?: string;
 
-  private renderer = new WebGLRenderer();
+  @Input("globeSize")
+  set globeSize(size: string) {
+    this.style["--globe-size"] = size;
+  }
+
+  style: any = {};
+
+  @ViewChild("GlobeCanvas") rendererContainer!: ElementRef;
+
+  private renderer = new WebGLRenderer({ alpha: true });
   private scene = new Scene();
   private globe = new ThreeGlobe();
   private camera = new PerspectiveCamera();
@@ -25,6 +56,11 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
   private ringsInterval?: any;
   private numberOfRings = [0];
   private countries: any;
+
+  @Input("globeConfig")
+  set newGlobeConfig(config: ThreeGlobeConfig) {
+    this.globeConfig = { ...this.globeConfig, ...config };
+  }
 
   private globeConfig: ThreeGlobeConfig = {
     pointSize: 4,
@@ -44,11 +80,20 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
     arcLength: 0.9,
     rings: 1,
     maxRings: 3,
-    initialPosition: { lat: 22.3193, lng: 114.1694 },
     manualRotate: true,
     autoRotate: true,
     autoRotateSpeed: 0.5,
   };
+
+  @Input("arcAndRingColors")
+  set arcAndRingColors(colors: string[]) {
+    this.colors = colors;
+  }
+
+  @Input("arcs")
+  set arcs(arcs: ThreeGlobePosition[]) {
+    this.arcData = arcs;
+  }
 
   private colors = ["#06b6d4", "#3b82f6", "#6366f1"];
   private arcData: ThreeGlobePosition[] = [
@@ -59,7 +104,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: -22.9068,
       endLng: -43.1729,
       arcAlt: 0.1,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 1,
@@ -68,7 +112,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: 3.139,
       endLng: 101.6869,
       arcAlt: 0.2,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 1,
@@ -77,7 +120,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: -1.303396,
       endLng: 36.852443,
       arcAlt: 0.5,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 2,
@@ -86,7 +128,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: 35.6762,
       endLng: 139.6503,
       arcAlt: 0.2,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 2,
@@ -95,7 +136,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: 3.139,
       endLng: 101.6869,
       arcAlt: 0.3,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 2,
@@ -104,7 +144,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: 36.162809,
       endLng: -115.119411,
       arcAlt: 0.3,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 3,
@@ -113,7 +152,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: 22.3193,
       endLng: 114.1694,
       arcAlt: 0.3,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 3,
@@ -122,7 +160,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: 40.7128,
       endLng: -74.006,
       arcAlt: 0.3,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 3,
@@ -131,7 +168,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: 51.5072,
       endLng: -0.1276,
       arcAlt: 0.3,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 4,
@@ -140,7 +176,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: -15.595412,
       endLng: -56.05918,
       arcAlt: 0.5,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 4,
@@ -149,7 +184,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: 22.3193,
       endLng: 114.1694,
       arcAlt: 0.7,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 4,
@@ -158,7 +192,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: 48.8566,
       endLng: -2.3522,
       arcAlt: 0.1,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 5,
@@ -167,7 +200,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: 51.5072,
       endLng: -0.1276,
       arcAlt: 0.3,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 5,
@@ -176,7 +208,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: -33.8688,
       endLng: 151.2093,
       arcAlt: 0.2,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 5,
@@ -185,7 +216,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: 48.8566,
       endLng: -2.3522,
       arcAlt: 0.2,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 6,
@@ -194,7 +224,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: 1.094136,
       endLng: -63.34546,
       arcAlt: 0.7,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 6,
@@ -203,7 +232,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: 35.6762,
       endLng: 139.6503,
       arcAlt: 0.1,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 6,
@@ -212,7 +240,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: 51.5072,
       endLng: -0.1276,
       arcAlt: 0.3,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 7,
@@ -221,7 +248,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: -15.595412,
       endLng: -56.05918,
       arcAlt: 0.1,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 7,
@@ -230,7 +256,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: 52.52,
       endLng: 13.405,
       arcAlt: 0.1,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 7,
@@ -239,7 +264,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: 34.0522,
       endLng: -118.2437,
       arcAlt: 0.2,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 8,
@@ -248,7 +272,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: -33.936138,
       endLng: 18.436529,
       arcAlt: 0.2,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 8,
@@ -257,7 +280,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: 52.3676,
       endLng: 4.9041,
       arcAlt: 0.2,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 8,
@@ -266,7 +288,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: 40.7128,
       endLng: -74.006,
       arcAlt: 0.5,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 9,
@@ -275,7 +296,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: 34.0522,
       endLng: -118.2437,
       arcAlt: 0.2,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 9,
@@ -284,7 +304,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: -22.9068,
       endLng: -43.1729,
       arcAlt: 0.7,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 9,
@@ -293,7 +312,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: -34.6037,
       endLng: -58.3816,
       arcAlt: 0.5,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 10,
@@ -302,7 +320,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: 28.6139,
       endLng: 77.209,
       arcAlt: 0.7,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 10,
@@ -311,7 +328,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: 31.2304,
       endLng: 121.4737,
       arcAlt: 0.3,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 10,
@@ -320,7 +336,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: 52.3676,
       endLng: 4.9041,
       arcAlt: 0.3,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 11,
@@ -329,7 +344,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: 34.0522,
       endLng: -118.2437,
       arcAlt: 0.2,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 11,
@@ -338,7 +352,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: 31.2304,
       endLng: 121.4737,
       arcAlt: 0.2,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 11,
@@ -347,7 +360,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: 1.3521,
       endLng: 103.8198,
       arcAlt: 0.2,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 12,
@@ -356,7 +368,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: 37.7749,
       endLng: -122.4194,
       arcAlt: 0.1,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 12,
@@ -365,7 +376,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: 22.3193,
       endLng: 114.1694,
       arcAlt: 0.2,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 12,
@@ -374,7 +384,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: 34.0522,
       endLng: -118.2437,
       arcAlt: 0.3,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 13,
@@ -383,7 +392,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: 22.3193,
       endLng: 114.1694,
       arcAlt: 0.3,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 13,
@@ -392,7 +400,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: 35.6762,
       endLng: 139.6503,
       arcAlt: 0.3,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 13,
@@ -401,7 +408,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: -34.6037,
       endLng: -58.3816,
       arcAlt: 0.1,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
     {
       order: 14,
@@ -410,7 +416,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       endLat: 21.395643,
       endLng: 39.883798,
       arcAlt: 0.3,
-      color: this.colors[Math.floor(Math.random() * (this.colors.length - 1))],
     },
   ];
 
@@ -418,6 +423,7 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     this.countries = getData();
+    this.setArcColors();
     this.initRenderer();
   }
 
@@ -425,20 +431,35 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
     clearInterval(this.ringsInterval);
   }
 
+  setArcColors(): void {
+    this.arcData.forEach((arc, index) => {
+      this.arcData[index].color =
+        this.colors[Math.floor(Math.random() * (this.colors.length - 1))];
+    });
+  }
+
   initRenderer(): void {
     this.initGlobe();
 
-    this.renderer.setSize(this.rendererContainer.nativeElement.getBoundingClientRect().width, this.rendererContainer.nativeElement.getBoundingClientRect().height);
+    this.renderer.setSize(
+      this.rendererContainer.nativeElement.getBoundingClientRect().width,
+      this.rendererContainer.nativeElement.getBoundingClientRect().height
+    );
     this.rendererContainer.nativeElement.appendChild(this.renderer.domElement);
+
     this.animate();
   }
 
   animate(): void {
     window.requestAnimationFrame(() => this.animate());
 
-    /* if (this.globeConfig.autoRotate) {
-      this.globe.rotation.y += this.globeConfig.autoRotateSpeed ?? 0.005;
-    } */
+    if (this.globeConfig.initialPosition) {
+      this.globe.rotation.set(
+        MathUtils.degToRad(this.globeConfig.initialPosition.lat),
+        MathUtils.degToRad(-this.globeConfig.initialPosition.lng),
+        0
+      );
+    }
 
     this.orbitControls?.update();
 
@@ -454,20 +475,23 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       .hexPolygonResolution(3)
       .hexPolygonMargin(0.7)
       .showAtmosphere(this.globeConfig.showAtmosphere ?? true)
-      .atmosphereColor(this.globeConfig.atmosphereColor ?? '#ffffff')
+      .atmosphereColor(this.globeConfig.atmosphereColor ?? "#ffffff")
       .atmosphereAltitude(this.globeConfig.atmosphereAltitude ?? 0.1)
       .hexPolygonColor((e) => {
-        return this.globeConfig.polygonColor ?? 'rgba(255,255,255,0.7)';
+        return this.globeConfig.polygonColor ?? "rgba(255,255,255,0.7)";
       });
 
     this.setRingInterval();
     this.startAnimation();
+
     this.scene.fog = new Fog(0xffffff, 400, 2000);
     this.scene.add(this.globe);
 
     const ambientLight = new AmbientLight(this.globeConfig.ambientLight, 0.6);
 
-    const leftLight = new DirectionalLight(this.globeConfig.directionalLeftLight);
+    const leftLight = new DirectionalLight(
+      this.globeConfig.directionalLeftLight
+    );
     leftLight.position.set(-400, 100, 400);
 
     const topLight = new DirectionalLight(this.globeConfig.directionalTopLight);
@@ -481,13 +505,19 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
     this.scene.add(topLight);
     this.scene.add(pointLight);
 
-    this.camera.aspect = this.rendererContainer.nativeElement.getBoundingClientRect().width / this.rendererContainer.nativeElement.getBoundingClientRect().height;
+    this.camera.aspect =
+      this.rendererContainer.nativeElement.getBoundingClientRect().width /
+      this.rendererContainer.nativeElement.getBoundingClientRect().height;
     this.camera.updateProjectionMatrix();
     this.camera.position.z = 300;
 
-    this.orbitControls = new OrbitControls(this.camera, this.renderer.domElement);
+    this.orbitControls = new OrbitControls(
+      this.camera,
+      this.renderer.domElement
+    );
     this.orbitControls.autoRotate = this.globeConfig.autoRotate ?? false;
-    this.orbitControls.autoRotateSpeed = this.globeConfig.autoRotateSpeed ?? 0.5;
+    this.orbitControls.autoRotateSpeed =
+      this.globeConfig.autoRotateSpeed ?? 0.5;
     this.orbitControls.enableRotate = this.globeConfig.manualRotate ?? false;
     this.orbitControls.enablePan = false;
     this.orbitControls.enableZoom = false;
@@ -530,7 +560,11 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
     let points: ThreeGlobeData[] = [];
     for (let i = 0; i < arcs.length; i++) {
       const arc = arcs[i];
-      const rgb = this.hexToRgb(arc.color) as { r: number; g: number; b: number };
+      const rgb = this.hexToRgb(arc.color ?? "#ffffff") as {
+        r: number;
+        g: number;
+        b: number;
+      };
       points.push({
         size: this.globeConfig.pointSize ?? 0,
         order: arc.order,
@@ -566,7 +600,9 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       .arcStartLng((d) => (d as { startLng: number }).startLng * 1)
       .arcEndLat((d) => (d as { endLat: number }).endLat * 1)
       .arcEndLng((d) => (d as { endLng: number }).endLng * 1)
-      .arcColor((e: any) => (e as { color: string }).color ?? 'rgba(255, 255, 255, 0.8)')
+      .arcColor(
+        (e: any) => (e as { color: string }).color ?? "rgba(255, 255, 255, 0.8)"
+      )
       .arcAltitude((e) => {
         return (e as { arcAlt: number }).arcAlt * 1;
       })
@@ -591,11 +627,12 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       .ringMaxRadius(this.globeConfig.maxRings ?? 0)
       .ringPropagationSpeed(3)
       .ringRepeatPeriod(
-        ((this.globeConfig.arcTime ?? 0) * (this.globeConfig.arcLength ?? 0)) / (this.globeConfig.rings ?? 1)
+        ((this.globeConfig.arcTime ?? 0) * (this.globeConfig.arcLength ?? 0)) /
+          (this.globeConfig.rings ?? 1)
       );
   }
 
-  private hexToRgb(hex: string): { r: number, g: number, b: number } | null {
+  private hexToRgb(hex: string): { r: number; g: number; b: number } | null {
     var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
     hex = hex.replace(shorthandRegex, function (m, r, g, b) {
       return r + r + g + g + b + b;
@@ -604,10 +641,10 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
     var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result
       ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16),
-      }
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16),
+        }
       : null;
   }
 
