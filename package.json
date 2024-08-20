@@ -1,0 +1,28 @@
+{
+  "name": "@omnedia/ngx-three-globe",
+  "description": "A simple component library to create a container with an animated and interactive globe.",
+  "version": "0.0.1",
+  "peerDependencies": {
+    "@angular/common": "^18.2.0",
+    "@angular/core": "^18.2.0",
+    "three-globe": "^2.31.1",
+    "three": "^0.167.1"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  },
+  "sideEffects": false,
+  "keywords": [
+    "npm",
+    "globe",
+    "3d",
+    "threejs",
+    "interactive",
+    "animation"
+  ],
+  "repository": {
+    "url": "https://github.com/omnedia/ngx-three-globe"
+  },
+  "author": "Markus Block (markus.block@omnedia.com)",
+  "license": "MIT"
+}
