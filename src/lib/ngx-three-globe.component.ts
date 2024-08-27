@@ -421,14 +421,44 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
 
   private globeData: ThreeGlobeData[] = [];
 
+  private isInView = false;
+  private isAnimating = false;
+  private animationFrameId?: number;
+  private intersectionObserver?: IntersectionObserver;
+
   ngAfterViewInit(): void {
     this.countries = getData();
     this.setArcColors();
     this.initRenderer();
+
+    this.intersectionObserver = new IntersectionObserver(([entry]) => {
+      this.renderContents(entry.isIntersecting)
+    })
+    this.intersectionObserver.observe(this.rendererContainer.nativeElement);
   }
 
   ngOnDestroy(): void {
     clearInterval(this.ringsInterval);
+
+    if (this.intersectionObserver) {
+      this.intersectionObserver.disconnect();
+    }
+
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+    }
+  }
+
+  renderContents(isIntersecting: boolean) {
+    if (isIntersecting && !this.isInView) {
+      this.isInView = true;
+
+      if (!this.isAnimating) {
+        this.animationFrameId = requestAnimationFrame(() => this.animate());
+      }
+    } else if (!isIntersecting) {
+      this.isInView = false;
+    }
   }
 
   setArcColors(): void {
@@ -451,7 +481,16 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
   }
 
   animate(): void {
-    window.requestAnimationFrame(() => this.animate());
+    if (!this.isInView) {
+      this.isAnimating = false;
+      return;
+    }
+
+    this.animationFrameId = requestAnimationFrame(() => this.animate());
+
+    if (!this.isAnimating) {
+      this.isAnimating = true;
+    }
 
     if (this.globeConfig.initialPosition) {
       this.globe.rotation.set(
@@ -628,7 +667,7 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       .ringPropagationSpeed(3)
       .ringRepeatPeriod(
         ((this.globeConfig.arcTime ?? 0) * (this.globeConfig.arcLength ?? 0)) /
-          (this.globeConfig.rings ?? 1)
+        (this.globeConfig.rings ?? 1)
       );
   }
 
@@ -641,10 +680,10 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
     var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result
       ? {
-          r: parseInt(result[1], 16),
-          g: parseInt(result[2], 16),
-          b: parseInt(result[3], 16),
-        }
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16),
+      }
       : null;
   }
 
