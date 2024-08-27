@@ -432,8 +432,8 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
     this.initRenderer();
 
     this.intersectionObserver = new IntersectionObserver(([entry]) => {
-      this.renderContents(entry.isIntersecting)
-    })
+      this.renderContents(entry.isIntersecting);
+    });
     this.intersectionObserver.observe(this.rendererContainer.nativeElement);
   }
 
@@ -667,7 +667,7 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       .ringPropagationSpeed(3)
       .ringRepeatPeriod(
         ((this.globeConfig.arcTime ?? 0) * (this.globeConfig.arcLength ?? 0)) /
-        (this.globeConfig.rings ?? 1)
+          (this.globeConfig.rings ?? 1)
       );
   }
 
@@ -680,10 +680,10 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
     var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result
       ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16),
-      }
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16),
+        }
       : null;
   }
 
