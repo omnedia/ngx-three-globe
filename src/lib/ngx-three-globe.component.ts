@@ -1,12 +1,5 @@
-import { CommonModule } from "@angular/common";
-import {
-  AfterViewInit,
-  Component,
-  ElementRef,
-  Input,
-  OnDestroy,
-  ViewChild,
-} from "@angular/core";
+import {CommonModule, isPlatformBrowser} from "@angular/common";
+import {AfterViewInit, Component, ElementRef, Inject, Input, OnDestroy, PLATFORM_ID, ViewChild,} from "@angular/core";
 import {
   AmbientLight,
   Color,
@@ -19,13 +12,9 @@ import {
   WebGLRenderer,
 } from "three";
 import ThreeGlobe from "three-globe";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-import { getData } from "./globe-data";
-import {
-  ThreeGlobeConfig,
-  ThreeGlobeData,
-  ThreeGlobePosition,
-} from "./ngx-three-globe.types";
+import {OrbitControls} from "three/examples/jsm/controls/OrbitControls.js";
+import {getData} from "./globe-data";
+import {ThreeGlobeConfig, ThreeGlobeData, ThreeGlobePosition,} from "./ngx-three-globe.types";
 
 @Component({
   selector: "om-three-globe",
@@ -47,7 +36,7 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
 
   @ViewChild("GlobeCanvas") rendererContainer!: ElementRef;
 
-  private renderer = new WebGLRenderer({ alpha: true });
+  private renderer = new WebGLRenderer({alpha: true});
   private scene = new Scene();
   private globe = new ThreeGlobe();
   private camera = new PerspectiveCamera();
@@ -59,7 +48,7 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
 
   @Input("globeConfig")
   set newGlobeConfig(config: ThreeGlobeConfig) {
-    this.globeConfig = { ...this.globeConfig, ...config };
+    this.globeConfig = {...this.globeConfig, ...config};
   }
 
   private globeConfig: ThreeGlobeConfig = {
@@ -426,15 +415,22 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
   private animationFrameId?: number;
   private intersectionObserver?: IntersectionObserver;
 
+  constructor(
+    @Inject(PLATFORM_ID) private platformId: object
+  ) {
+  }
+
   ngAfterViewInit(): void {
     this.countries = getData();
     this.setArcColors();
     this.initRenderer();
 
-    this.intersectionObserver = new IntersectionObserver(([entry]) => {
-      this.renderContents(entry.isIntersecting);
-    });
-    this.intersectionObserver.observe(this.rendererContainer.nativeElement);
+    if (isPlatformBrowser(this.platformId)) {
+      this.intersectionObserver = new IntersectionObserver(([entry]) => {
+        this.renderContents(entry.isIntersecting);
+      });
+      this.intersectionObserver.observe(this.rendererContainer.nativeElement);
+    }
   }
 
   ngOnDestroy(): void {
@@ -667,7 +663,7 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       .ringPropagationSpeed(3)
       .ringRepeatPeriod(
         ((this.globeConfig.arcTime ?? 0) * (this.globeConfig.arcLength ?? 0)) /
-          (this.globeConfig.rings ?? 1)
+        (this.globeConfig.rings ?? 1)
       );
   }
 
@@ -680,10 +676,10 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
     var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return result
       ? {
-          r: parseInt(result[1], 16),
-          g: parseInt(result[2], 16),
-          b: parseInt(result[3], 16),
-        }
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16),
+      }
       : null;
   }
 
