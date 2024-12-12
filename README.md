@@ -1,5 +1,13 @@
 # ngx-three-globe
 
+<a href="https://ngxui.com" target="_blank" style="display: flex;gap: .5rem;align-items: center;cursor: pointer; padding: 0 0 0 0; height: fit-content;">
+  <img src="https://ngxui.com/assets/img/ngxui-logo.png" style="width: 64px;height: 64px;">
+  <p style="font-weight: bold; padding: 0; margin: 0; font-size: 4rem">NGXUI</p>
+</a>
+
+This Library is part of the NGXUI ecosystem. <br>
+View all available components at https://ngxui.com
+
 `@omnedia/ngx-three-globe` is an Angular library that provides an interactive, 3D globe visualization built using three-globe and three.js. This component offers customizable globe settings, light sources, and animated arcs and rings, making it perfect for data visualization or adding dynamic elements to your Angular applications.
 
 ## Features
@@ -25,21 +33,23 @@ Both three-globe and three are required as peer dependencies for this library to
 Import the `NgxThreeGlobeComponent` in your Angular module or component:
 
 ```typescript
-import { NgxThreeGlobeComponent } from '@omnedia/ngx-three-globe';
+import {NgxThreeGlobeComponent} from '@omnedia/ngx-three-globe';
 
 @Component({
   ...
-  imports: [
-    ...
-    NgxThreeGlobeComponent,
-  ],
+    imports:
+[
   ...
+    NgxThreeGlobeComponent,
+],
+...
 })
 ```
 
 Use the component in your template:
 
 ```html
+
 <om-three-globe
   [globeSize]="'800px'"
   [globeConfig]="{
@@ -56,6 +66,7 @@ Use the component in your template:
 ## API
 
 ```html
+
 <om-three-globe
   [globeSize]="globeSize"
   [globeConfig]="globeConfig"
@@ -75,6 +86,7 @@ Use the component in your template:
 ## Example
 
 ```html
+
 <om-three-globe
   [globeSize]="'500px'"
   [globeConfig]="{
