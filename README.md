@@ -21,8 +21,8 @@ View all available components at https://ngxui.com
 Install the library and the required peer dependencies using npm:
 
 ```bash
-npm install @omnedia/ngx-three-globe
-npm install three three-globe --save
+npm install @omnedia/ngx-three-globe three three-globe
+npm i --save-dev @types/three
 ```
 
 Both three-globe and three are required as peer dependencies for this library to function correctly.
