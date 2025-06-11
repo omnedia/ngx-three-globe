@@ -1,13 +1,14 @@
 import {CommonModule, isPlatformBrowser} from "@angular/common";
 import {
   AfterViewInit,
-  ChangeDetectorRef,
+  ChangeDetectionStrategy,
   Component,
   ElementRef,
   Inject,
   Input,
   OnDestroy,
   PLATFORM_ID,
+  signal,
   ViewChild,
 } from "@angular/core";
 import {
@@ -32,6 +33,7 @@ import {ThreeGlobeConfig, ThreeGlobeData, ThreeGlobePosition,} from "./ngx-three
   imports: [CommonModule],
   templateUrl: "./ngx-three-globe.component.html",
   styleUrl: "./ngx-three-globe.component.scss",
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
   @Input("styleClass")
@@ -39,7 +41,7 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
 
   @Input("globeSize")
   set globeSize(size: string) {
-    this.style["--globe-size"] = size;
+    this.style.set({...this.style(), '--globe-size': size});
     this.setGlobeSize = size;
 
     if (this.globeInitialized) {
@@ -51,7 +53,7 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
 
   setGlobeSize?: string;
 
-  style: any = {};
+  style = signal({});
 
   @ViewChild("GlobeCanvas") rendererContainer!: ElementRef<HTMLElement>;
 
@@ -437,7 +439,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
   private intersectionObserver?: IntersectionObserver;
 
   constructor(
-    private readonly cdr: ChangeDetectorRef,
     @Inject(PLATFORM_ID) private platformId: object
   ) {
   }
@@ -487,9 +488,7 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
   }
 
   initRenderer(): void {
-    if (!this.globeInitialized) {
-      this.initGlobe();
-    }
+    this.initGlobe();
 
     const componentParent = this.rendererContainer.nativeElement.parentElement?.parentElement?.parentElement;
 
@@ -502,8 +501,7 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
 
       const globeSize = (width < height ? width : height);
 
-      this.style["--globe-size"] = globeSize + 'px';
-      this.cdr.detectChanges();
+      this.style.set({...this.style(), '--globe-size': globeSize + 'px'});
       this.setGlobeSize = globeSize + 'px';
 
       rendererContainerBoundingClientRect.width = globeSize;
@@ -557,6 +555,10 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
   }
 
   initGlobe(): void {
+    if (this.globeInitialized) {
+      return;
+    }
+
     this.buildData();
     this.buildMaterial();
 
