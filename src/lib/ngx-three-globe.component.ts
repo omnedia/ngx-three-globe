@@ -11,19 +11,9 @@ import {
   signal,
   ViewChild,
 } from "@angular/core";
-import {
-  AmbientLight,
-  Color,
-  DirectionalLight,
-  Fog,
-  MathUtils,
-  PerspectiveCamera,
-  PointLight,
-  Scene,
-  WebGLRenderer,
-} from "three";
-import ThreeGlobe from "three-globe";
-import {OrbitControls} from "three/examples/jsm/controls/OrbitControls.js";
+import type {Color, PerspectiveCamera, Scene, WebGLRenderer} from "three";
+import type {OrbitControls} from "three/examples/jsm/controls/OrbitControls.js";
+import type ThreeGlobe from "three-globe";
 import {getData} from "./globe-data";
 import {ThreeGlobeConfig, ThreeGlobeData, ThreeGlobePosition,} from "./ngx-three-globe.types";
 
@@ -46,7 +36,7 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
 
     if (this.globeInitialized) {
       setTimeout(() => {
-        this.initRenderer();
+        void this.initRenderer();
       }, 1);
     }
   }
@@ -57,11 +47,17 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
 
   @ViewChild("GlobeCanvas") rendererContainer!: ElementRef<HTMLElement>;
 
-  private renderer = new WebGLRenderer({alpha: true});
-  private scene = new Scene();
-  private globe = new ThreeGlobe();
-  private camera = new PerspectiveCamera();
+  private isBrowser = false;
+
+  private renderer?: WebGLRenderer;
+  private scene?: Scene;
+  private globe?: ThreeGlobe;
+  private camera?: PerspectiveCamera;
   private orbitControls?: OrbitControls;
+  private three?: typeof import("three");
+  private ThreeGlobeCtor?: typeof ThreeGlobe;
+  private OrbitControlsCtor?: typeof OrbitControls;
+  private threeLoadPromise?: Promise<void>;
 
   private ringsInterval?: any;
   private numberOfRings = [0];
@@ -98,11 +94,17 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
   @Input("arcAndRingColors")
   set arcAndRingColors(colors: string[]) {
     this.colors = colors;
+    if (this.globeInitialized) {
+      this.refreshGlobeData();
+    }
   }
 
   @Input("arcs")
   set arcs(arcs: ThreeGlobePosition[]) {
     this.arcData = arcs;
+    if (this.globeInitialized) {
+      this.refreshGlobeData();
+    }
   }
 
   private colors = ["#06b6d4", "#3b82f6", "#6366f1"];
@@ -441,19 +443,22 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
   constructor(
     @Inject(PLATFORM_ID) private platformId: object
   ) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
   }
 
-  ngAfterViewInit(): void {
+  async ngAfterViewInit(): Promise<void> {
+    if (!this.isBrowser) {
+      return;
+    }
+
     this.countries = getData();
     this.setArcColors();
-    this.initRenderer();
+    await this.initRenderer();
 
-    if (isPlatformBrowser(this.platformId)) {
-      this.intersectionObserver = new IntersectionObserver(([entry]) => {
-        this.renderContents(entry.isIntersecting);
-      });
-      this.intersectionObserver.observe(this.rendererContainer.nativeElement);
-    }
+    this.intersectionObserver = new IntersectionObserver(([entry]) => {
+      this.renderContents(entry.isIntersecting);
+    });
+    this.intersectionObserver.observe(this.rendererContainer.nativeElement);
   }
 
   ngOnDestroy(): void {
@@ -463,32 +468,96 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
       this.intersectionObserver.disconnect();
     }
 
-    if (this.animationFrameId) {
+    if (this.animationFrameId && this.isBrowser) {
       cancelAnimationFrame(this.animationFrameId);
     }
+
+    this.orbitControls?.dispose();
+    this.renderer?.dispose();
   }
 
   renderContents(isIntersecting: boolean) {
-    if (isIntersecting && !this.isInView) {
+    if (!this.isBrowser) {
+      return;
+    }
+
+    if (isIntersecting) {
       this.isInView = true;
 
-      if (!this.isAnimating) {
+      if (!this.isAnimating && !this.animationFrameId) {
         this.animationFrameId = requestAnimationFrame(() => this.animate());
       }
-    } else if (!isIntersecting) {
+      return;
+    }
+
+    if (!isIntersecting) {
       this.isInView = false;
+      if (this.animationFrameId) {
+        cancelAnimationFrame(this.animationFrameId);
+        this.animationFrameId = undefined;
+      }
+      this.isAnimating = false;
     }
   }
 
   setArcColors(): void {
+    if (!this.colors.length) {
+      return;
+    }
+
     this.arcData.forEach((arc, index) => {
       this.arcData[index].color =
-        this.colors[Math.floor(Math.random() * (this.colors.length - 1))];
+        this.colors[Math.floor(Math.random() * this.colors.length)];
     });
   }
 
-  initRenderer(): void {
-    this.initGlobe();
+  private refreshGlobeData(): void {
+    if (!this.isBrowser || !this.globeInitialized || !this.globe) {
+      return;
+    }
+
+    this.setArcColors();
+    this.buildData();
+    this.startAnimation();
+    this.setRingInterval();
+  }
+
+  private async ensureGlobeObjects(): Promise<boolean> {
+    if (!this.isBrowser) {
+      return false;
+    }
+
+    await this.loadThree();
+
+    if (!this.three || !this.ThreeGlobeCtor) {
+      return false;
+    }
+
+    const {WebGLRenderer, Scene, PerspectiveCamera} = this.three;
+
+    this.renderer ??= new WebGLRenderer({alpha: true});
+    this.scene ??= new Scene();
+    this.globe ??= new this.ThreeGlobeCtor();
+    this.camera ??= new PerspectiveCamera();
+
+    return true;
+  }
+
+  async initRenderer(): Promise<void> {
+    if (!this.isBrowser) {
+      return;
+    }
+
+    const ready = await this.ensureGlobeObjects();
+
+    if (!ready || !this.renderer || !this.scene || !this.globe || !this.camera) {
+      return;
+    }
+
+    const renderer = this.renderer;
+    const container = this.rendererContainer.nativeElement;
+
+    await this.initGlobe();
 
     const componentParent = this.rendererContainer.nativeElement.parentElement?.parentElement?.parentElement;
 
@@ -514,14 +583,13 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
     }
 
     setTimeout(() => {
-      this.renderer.setSize(
+      renderer.setSize(
         rendererContainerBoundingClientRect.width,
         rendererContainerBoundingClientRect.height
       );
 
-      const container = this.rendererContainer.nativeElement;
       container.innerHTML = '';
-      container.appendChild(this.renderer.domElement);
+      container.appendChild(renderer.domElement);
     }, 0);
 
     this.globeInitialized = true;
@@ -530,19 +598,31 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
   }
 
   animate(): void {
+    this.animationFrameId = undefined;
+    const {MathUtils} = this.three ?? {};
+    const renderer = this.renderer;
+    const scene = this.scene;
+    const camera = this.camera;
+    const globe = this.globe;
+
+    if (!this.isBrowser || !renderer || !scene || !camera || !globe || !MathUtils) {
+      this.isAnimating = false;
+      return;
+    }
+
     if (!this.isInView) {
       this.isAnimating = false;
       return;
     }
 
-    this.animationFrameId = requestAnimationFrame(() => this.animate());
-
     if (!this.isAnimating) {
       this.isAnimating = true;
     }
 
+    this.animationFrameId = requestAnimationFrame(() => this.animate());
+
     if (this.globeConfig.initialPosition) {
-      this.globe.rotation.set(
+      globe.rotation.set(
         MathUtils.degToRad(this.globeConfig.initialPosition.lat),
         MathUtils.degToRad(-this.globeConfig.initialPosition.lng),
         0
@@ -551,10 +631,27 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
 
     this.orbitControls?.update();
 
-    this.renderer.render(this.scene, this.camera);
+    renderer.render(scene, camera);
   }
 
-  initGlobe(): void {
+  async initGlobe(): Promise<void> {
+    if (!this.isBrowser) {
+      return;
+    }
+
+    const ready = await this.ensureGlobeObjects();
+
+    const globe = this.globe;
+    const scene = this.scene;
+    const camera = this.camera;
+    const renderer = this.renderer;
+    const three = this.three;
+    const OrbitControlsCtor = this.OrbitControlsCtor;
+
+    if (!ready || !globe || !scene || !camera || !renderer || !three || !OrbitControlsCtor) {
+      return;
+    }
+
     if (this.globeInitialized) {
       return;
     }
@@ -562,7 +659,7 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
     this.buildData();
     this.buildMaterial();
 
-    this.globe
+    globe
       .hexPolygonsData(this.countries.features)
       .hexPolygonResolution(3)
       .hexPolygonMargin(0.7)
@@ -576,8 +673,10 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
     this.setRingInterval();
     this.startAnimation();
 
-    this.scene.fog = new Fog(0xffffff, 400, 2000);
-    this.scene.add(this.globe);
+    const {Fog, AmbientLight, DirectionalLight, PointLight} = three;
+
+    scene.fog = new Fog(0xffffff, 400, 2000);
+    scene.add(globe);
 
     const ambientLight = new AmbientLight(this.globeConfig.ambientLight, 0.6);
 
@@ -592,20 +691,20 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
     const pointLight = new PointLight(this.globeConfig.pointLight, 0.8);
     pointLight.position.set(-200, 500, 200);
 
-    this.scene.add(ambientLight);
-    this.scene.add(leftLight);
-    this.scene.add(topLight);
-    this.scene.add(pointLight);
+    scene.add(ambientLight);
+    scene.add(leftLight);
+    scene.add(topLight);
+    scene.add(pointLight);
 
-    this.camera.aspect =
+    camera.aspect =
       this.rendererContainer.nativeElement.getBoundingClientRect().width /
       this.rendererContainer.nativeElement.getBoundingClientRect().height;
-    this.camera.updateProjectionMatrix();
-    this.camera.position.z = 300;
+    camera.updateProjectionMatrix();
+    camera.position.z = 300;
 
-    this.orbitControls = new OrbitControls(
-      this.camera,
-      this.renderer.domElement
+    this.orbitControls = new OrbitControlsCtor(
+      camera,
+      renderer.domElement
     );
     this.orbitControls.autoRotate = this.globeConfig.autoRotate ?? false;
     this.orbitControls.autoRotateSpeed =
@@ -620,6 +719,16 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
   }
 
   private setRingInterval(): void {
+    if (!this.isBrowser || !this.globe) {
+      return;
+    }
+
+    const globe = this.globe;
+
+    if (this.ringsInterval) {
+      clearInterval(this.ringsInterval);
+    }
+
     this.ringsInterval = setInterval(() => {
       this.numberOfRings = this.genRandomNumbers(
         0,
@@ -627,14 +736,20 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
         Math.floor((this.globeData.length * 4) / 5)
       );
 
-      this.globe.ringsData(
+      globe.ringsData(
         this.globeData.filter((d, i) => this.numberOfRings.includes(i))
       );
     }, 2000);
   }
 
   private buildMaterial(): void {
-    const globeMaterial = this.globe.globeMaterial() as unknown as {
+    const globe = this.globe;
+    const {Color} = this.three ?? {};
+    if (!globe || !Color) {
+      return;
+    }
+
+    const globeMaterial = globe.globeMaterial() as unknown as {
       color: Color;
       emissive: Color;
       emissiveIntensity: number;
@@ -647,15 +762,35 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
     globeMaterial.shininess = this.globeConfig.shininess || 0.9;
   }
 
+  private loadThree(): Promise<void> {
+    if (this.threeLoadPromise) {
+      return this.threeLoadPromise;
+    }
+
+    this.threeLoadPromise = (async () => {
+      const [three, threeGlobe, orbitControls] = await Promise.all([
+        import("three"),
+        import("three-globe"),
+        import("three/examples/jsm/controls/OrbitControls.js"),
+      ]);
+
+      this.three = three as typeof import("three");
+      this.ThreeGlobeCtor = (threeGlobe?.default ?? threeGlobe) as unknown as typeof ThreeGlobe;
+      this.OrbitControlsCtor = (orbitControls?.OrbitControls ?? orbitControls?.default) as unknown as typeof OrbitControls;
+    })();
+
+    return this.threeLoadPromise;
+  }
+
   private buildData(): void {
     const arcs = this.arcData;
     let points: ThreeGlobeData[] = [];
     for (let i = 0; i < arcs.length; i++) {
       const arc = arcs[i];
-      const rgb = this.hexToRgb(arc.color ?? "#ffffff") as {
-        r: number;
-        g: number;
-        b: number;
+      const rgb = this.hexToRgb(arc.color ?? "#ffffff") ?? {
+        r: 255,
+        g: 255,
+        b: 255,
       };
       points.push({
         size: this.globeConfig.pointSize ?? 0,
@@ -684,40 +819,42 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
   }
 
   startAnimation(): void {
-    this.globe
+    const globe = this.globe;
+    if (!globe) {
+      return;
+    }
+
+    globe
       .arcsData(this.arcData)
-      .arcStartLat((d) => (d as { startLat: number }).startLat)
-      .arcStartLng((d) => (d as { startLng: number }).startLng)
-      .arcEndLat((d) => (d as { endLat: number }).endLat)
-      .arcEndLng((d) => (d as { endLng: number }).endLng)
+      .arcStartLat((d: any) => (d as ThreeGlobePosition).startLat)
+      .arcStartLng((d: any) => (d as ThreeGlobePosition).startLng)
+      .arcEndLat((d: any) => (d as ThreeGlobePosition).endLat)
+      .arcEndLng((d: any) => (d as ThreeGlobePosition).endLng)
       .arcColor(
         (e: any) => (e as { color: string }).color ?? "rgba(255, 255, 255, 0.8)"
       )
-      .arcAltitude((e) => {
-        return (e as { arcAlt: number }).arcAlt;
-      })
+      .arcAltitude((e: any) => (e as ThreeGlobePosition).arcAlt)
       .arcStroke(() => {
         return [0.32, 0.28, 0.3][Math.round(Math.random() * 2)];
       })
       .arcDashLength(this.globeConfig.arcLength ?? 0)
-      .arcDashInitialGap((e) => (e as { order: number }).order)
+      .arcDashInitialGap((e: any) => (e as ThreeGlobePosition).order)
       .arcDashGap(15)
       .arcDashAnimateTime(() => this.globeConfig.arcTime ?? 0);
 
-    this.globe
+    globe
       .pointsData(this.globeData)
-      .pointColor((e) => (e as { color: string }).color)
       .pointColor((e: any) => {
-        if (typeof e.color === 'function') return e.color(0.5);
-        return e.color ?? '#ffffff';
+        if (typeof e.color === "function") return e.color(0.5);
+        return e.color ?? "#ffffff";
       })
       .pointsMerge(true)
       .pointAltitude(0.0)
       .pointRadius(2);
 
-    this.globe
+    globe
       .ringsData([])
-      .ringColor((e: any) => (t: any) => e.color(t))
+      .ringColor((e: any) => (t: number) => e.color(t))
       .ringMaxRadius(this.globeConfig.maxRings ?? 0)
       .ringPropagationSpeed(3)
       .ringRepeatPeriod(
