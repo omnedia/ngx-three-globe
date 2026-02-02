@@ -75,6 +75,13 @@ If your bundler does not honor conditional exports, import the server stub expli
 import {NgxThreeGlobeComponent} from "@omnedia/ngx-three-globe/server";
 ```
 
+If you need to force the browser implementation (for example in client-only routes),
+use the dedicated browser entrypoint:
+
+```typescript
+import {NgxThreeGlobeComponent} from "@omnedia/ngx-three-globe/browser";
+```
+
 ## API
 
 ```html

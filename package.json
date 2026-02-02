@@ -27,6 +27,10 @@
     "./server": {
       "types": "./server/public-api.d.ts",
       "default": "./server/fesm2022/ngx-three-globe-server.mjs"
+    },
+    "./browser": {
+      "types": "./browser/public-api.d.ts",
+      "default": "./browser/fesm2022/ngx-three-globe-browser.mjs"
     }
   },
   "sideEffects": false,
