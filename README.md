@@ -63,6 +63,18 @@ Use the component in your template:
 ></om-three-globe>
 ```
 
+## SSR (Server-Side Rendering)
+
+This package ships a server-safe entrypoint. Most SSR toolchains will automatically
+resolve it via conditional exports, so `@omnedia/ngx-three-globe` will not access
+`window` on the server.
+
+If your bundler does not honor conditional exports, import the server stub explicitly:
+
+```typescript
+import {NgxThreeGlobeComponent} from "@omnedia/ngx-three-globe/server";
+```
+
 ## API
 
 ```html

@@ -14,6 +14,20 @@
   "dependencies": {
     "tslib": "^2.3.0"
   },
+  "exports": {
+    ".": {
+      "types": "./public-api.d.ts",
+      "browser": "./fesm2022/ngx-three-globe.mjs",
+      "default": "./server/fesm2022/ngx-three-globe-server.mjs"
+    },
+    "./package.json": {
+      "default": "./package.json"
+    },
+    "./server": {
+      "types": "./server/public-api.d.ts",
+      "default": "./server/fesm2022/ngx-three-globe-server.mjs"
+    }
+  },
   "sideEffects": false,
   "keywords": [
     "npm",
