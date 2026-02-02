@@ -6,10 +6,11 @@
     "@angular/common": "^21.0.0",
     "@angular/core": "^21.0.0",
     "three-globe": "^2.42.11",
-    "three": "^0.177.0"
+    "three": "^0.182.0"
   },
   "devDependencies": {
-    "@types/three": "^0.177.0"
+    "@types/three": "^0.182.0",
+    "three": "file:../three.js"
   },
   "dependencies": {
     "tslib": "^2.3.0"
