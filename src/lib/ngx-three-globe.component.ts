@@ -1,21 +1,10 @@
-import {CommonModule, isPlatformBrowser} from "@angular/common";
-import {
-  AfterViewInit,
-  ChangeDetectionStrategy,
-  Component,
-  ElementRef,
-  Inject,
-  Input,
-  OnDestroy,
-  PLATFORM_ID,
-  signal,
-  ViewChild,
-} from "@angular/core";
-import type {Color, PerspectiveCamera, Scene, WebGLRenderer} from "three";
-import type {OrbitControls} from "three/examples/jsm/controls/OrbitControls.js";
+import { CommonModule, isPlatformBrowser } from "@angular/common";
+import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, Inject, Input, OnDestroy, PLATFORM_ID, signal, ViewChild, } from "@angular/core";
+import type { Color, PerspectiveCamera, Scene, WebGLRenderer } from "three";
+import type { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type ThreeGlobe from "three-globe";
-import {getData} from "./globe-data";
-import {ThreeGlobeConfig, ThreeGlobeData, ThreeGlobePosition,} from "./ngx-three-globe.types";
+import { getData } from "./globe-data";
+import { ThreeGlobeConfig, ThreeGlobeData, ThreeGlobePosition, } from "./ngx-three-globe.types";
 
 @Component({
   selector: "om-three-globe",
@@ -776,7 +765,7 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
 
       this.three = three as typeof import("three");
       this.ThreeGlobeCtor = (threeGlobe?.default ?? threeGlobe) as unknown as typeof ThreeGlobe;
-      this.OrbitControlsCtor = (orbitControls?.OrbitControls ?? orbitControls?.default) as unknown as typeof OrbitControls;
+      this.OrbitControlsCtor = (orbitControls?.OrbitControls ?? (orbitControls as any)?.default) as unknown as typeof OrbitControls;
     })();
 
     return this.threeLoadPromise;
