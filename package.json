@@ -6,13 +6,32 @@
     "@angular/common": "^21.0.0",
     "@angular/core": "^21.0.0",
     "three-globe": "^2.42.11",
-    "three": "^0.177.0"
+    "three": "^0.182.0"
   },
   "devDependencies": {
-    "@types/three": "^0.177.0"
+    "@types/three": "^0.182.0",
+    "three": "file:../three.js"
   },
   "dependencies": {
     "tslib": "^2.3.0"
+  },
+  "exports": {
+    ".": {
+      "types": "./public-api.d.ts",
+      "browser": "./fesm2022/ngx-three-globe.mjs",
+      "default": "./server/fesm2022/ngx-three-globe-server.mjs"
+    },
+    "./package.json": {
+      "default": "./package.json"
+    },
+    "./server": {
+      "types": "./server/public-api.d.ts",
+      "default": "./server/fesm2022/ngx-three-globe-server.mjs"
+    },
+    "./browser": {
+      "types": "./browser/public-api.d.ts",
+      "default": "./browser/fesm2022/ngx-three-globe-browser.mjs"
+    }
   },
   "sideEffects": false,
   "keywords": [

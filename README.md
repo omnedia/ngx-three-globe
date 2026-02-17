@@ -29,13 +29,14 @@ Both three-globe and three are required as peer dependencies for this library to
 
 ## Usage
 
-Import the `NgxThreeGlobeComponent` in your Angular module or component:
+`NgxThreeGlobeComponent` is a standalone component. Import it in your standalone component:
 
 ```typescript
 import {NgxThreeGlobeComponent} from '@omnedia/ngx-three-globe';
 
 @Component({
   ...
+  standalone: true,
     imports:
 [
   ...
@@ -62,6 +63,25 @@ Use the component in your template:
 ></om-three-globe>
 ```
 
+## SSR (Server-Side Rendering)
+
+This package ships a server-safe entrypoint. Most SSR toolchains will automatically
+resolve it via conditional exports, so `@omnedia/ngx-three-globe` will not access
+`window` on the server.
+
+If your bundler does not honor conditional exports, import the server stub explicitly:
+
+```typescript
+import {NgxThreeGlobeComponent} from "@omnedia/ngx-three-globe/server";
+```
+
+If you need to force the browser implementation (for example in client-only routes),
+use the dedicated browser entrypoint:
+
+```typescript
+import {NgxThreeGlobeComponent} from "@omnedia/ngx-three-globe/browser";
+```
+
 ## API
 
 ```html
@@ -79,7 +99,7 @@ Use the component in your template:
 - `globeSize` (optional): The size of the globe in pixels. Accepts a string value such as '600px' or '100%'. Defaults to '600px'.
 - `globeConfig` (optional): A configuration object that defines the appearance and behavior of the globe, including lighting, atmosphere, rotation, and more. See the configuration options below.
 - `arcAndRingColors` (optional): An array of color strings used to customize the arcs and rings displayed on the globe. They will get random colors from this array.
-- `arcs` (optional): An array of ThreeGlobePosition objects used to add customized arcs if the default ones arent whats needed.
+- `arcs` (optional): An array of ThreeGlobePosition objects used to add customized arcs if the default ones aren't what's needed. Each arc can also include an optional `color` to override the random color selection.
 - `styleClass` (optional): A custom CSS class to apply to the globe's wrapper element for additional styling.
 
 ## Example
@@ -124,6 +144,7 @@ The `globeConfig` input allows you to configure various aspects of the globe's a
 - `arcLength`: The length of the animated arcs.
 - `rings`: The number of rings around the globe.
 - `maxRings`: The maximum number of rings allowed.
+- `initialPosition`: The initial globe rotation in degrees, `{ lat, lng }`.
 - `manualRotate`: A boolean to enable or disable manual rotation of the globe.
 - `autoRotate`: A boolean to enable or disable automatic rotation of the globe.
 - `autoRotateSpeed`: The speed at which the globe rotates automatically.
