@@ -1,5 +1,5 @@
 import { CommonModule, isPlatformBrowser } from "@angular/common";
-import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, Inject, Input, OnDestroy, PLATFORM_ID, signal, ViewChild, } from "@angular/core";
+import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, inject, Input, OnDestroy, PLATFORM_ID, signal, ViewChild, } from "@angular/core";
 import type { Color, PerspectiveCamera, Scene, WebGLRenderer } from "three";
 import type { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import type ThreeGlobe from "three-globe";
@@ -15,6 +15,9 @@ import { ThreeGlobeConfig, ThreeGlobeData, ThreeGlobePosition, } from "./ngx-thr
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
+  private platformId = inject(PLATFORM_ID);
+  private isBrowser = isPlatformBrowser(this.platformId);
+
   @Input("styleClass")
   styleClass?: string;
 
@@ -35,8 +38,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
   style = signal({});
 
   @ViewChild("GlobeCanvas") rendererContainer!: ElementRef<HTMLElement>;
-
-  private isBrowser = false;
 
   private renderer?: WebGLRenderer;
   private scene?: Scene;
@@ -428,12 +429,6 @@ export class NgxThreeGlobeComponent implements AfterViewInit, OnDestroy {
   private isAnimating = false;
   private animationFrameId?: number;
   private intersectionObserver?: IntersectionObserver;
-
-  constructor(
-    @Inject(PLATFORM_ID) private platformId: object
-  ) {
-    this.isBrowser = isPlatformBrowser(this.platformId);
-  }
 
   async ngAfterViewInit(): Promise<void> {
     if (!this.isBrowser) {

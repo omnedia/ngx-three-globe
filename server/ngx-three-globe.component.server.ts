@@ -1,5 +1,5 @@
-import {ChangeDetectionStrategy, Component, Input} from "@angular/core";
-import type {ThreeGlobeConfig, ThreeGlobePosition} from "./ngx-three-globe.types";
+import { ChangeDetectionStrategy, Component, Input } from "@angular/core";
+import type { ThreeGlobeConfig, ThreeGlobePosition } from "./ngx-three-globe.types";
 
 @Component({
   selector: "om-three-globe",
@@ -12,7 +12,7 @@ import type {ThreeGlobeConfig, ThreeGlobePosition} from "./ngx-three-globe.types
       <div class="om-three-globe-canvas-wrapper"></div>
     </div>
   `,
-  styleUrl: "./ngx-three-globe.component.scss",
+  styleUrl: "../browser/ngx-three-globe.component.scss",
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NgxThreeGlobeComponent {
